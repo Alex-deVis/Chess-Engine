@@ -14,5 +14,8 @@ game.o:
 run: build
 	./main
 
+debug: build
+	valgrind --leak-check=full --track-origins=yes ./main
+
 clean:
 	rm main

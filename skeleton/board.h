@@ -17,17 +17,18 @@ struct EnumClassHash {
 class Board {
  private:
     std::vector<std::vector<Piece*>> *board;
-    std::unordered_map<Type, std::vector<Piece*>, EnumClassHash> white_pieces;
-    std::unordered_map<Type, std::vector<Piece*>, EnumClassHash> black_pieces;
- 
+    void add_piece(Piece *piece);
+    void add_piece(Piece *piece, Position position);
+
  public:
+    Position w_king, b_king;
+
     Board();
     ~Board();
 
-    void add_piece(Piece *piece);
-    void add_piece(Piece *piece, Position position);
     bool is_piece_at(Position position);
     Piece* get_piece_at(Position position);
+    void set_piece_at(Piece *piece, Position position);
 
     void print_board();
 };
@@ -38,11 +39,12 @@ class Board {
     Promotion:  third LSB set
 */
 
-class Configuration {
+class Transition {
  public:
     std::string move_string;
     Position start, end;
     int value;
+    Piece *taken_piece;
 
-    Configuration(std::string move_string, bool capture, bool promotion, bool castle);
+    Transition(std::string move_string, bool capture, bool promotion, bool castle, Piece* tp);
 };

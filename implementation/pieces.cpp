@@ -1,5 +1,29 @@
 #include "../skeleton/pieces.h"
 
+std::ostream& operator<<(std::ostream & os, Type& type) {
+    switch (type) {
+    case K:
+        os << "King";
+        break;
+    case Q:
+        os << "Queen";
+        break;
+    case R:
+        os << "Rook";
+        break;
+    case B:
+        os << "Bishop";
+        break;
+    case N:
+        os << "Knight";
+        break;
+    case P:
+        os << "Pawn";
+        break;
+    }
+    return os;
+}
+
 Position::Position(char col, int row) : col(col), row(row) {
     if (!(col >= 'a' && col <= 'h' && row >= 1 && row <= 8)) {
         std::cout << col << row << "\n";
