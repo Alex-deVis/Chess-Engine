@@ -1,12 +1,11 @@
 #include <iostream>
-#include "pieces.h"
-#include "move_checker.h"
+#include "./skeleton/game.h"
 
 using namespace std;
 
 int main() {
-    Board *game = new Board();
-    game->print_current_config();
+    Game *game = new Game();
+    game->print_board();
     delete game;
 
     return 0;
