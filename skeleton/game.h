@@ -16,6 +16,7 @@ private:
    std::vector<Transition> *played_moves;
    bool white_to_move;
 
+   // Check moving patterns
    bool can_reach(King *p, Position end);
    bool can_reach(Queen *p, Position end);
    bool can_reach(Rook *p, Position end);
@@ -23,13 +24,8 @@ private:
    bool can_reach(Knight *p, Position end);
    bool can_reach(Pawn *p, Position end);
 
+   // Helpers
    bool has_moved(Piece *p);
-
-   bool will_remain_in_check_after(Position start, Position end);
-
    Transition generate_transition(std::string move_string);
-
-   bool knight_check(Position king_pos, int col_offset, int row_offset);
-   bool moving_linearly(Position start, Position end);
-   bool moving_diagonaly(Position start, Position end);
+   bool will_remain_in_check_after(Position start, Position end);
 };

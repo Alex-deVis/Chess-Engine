@@ -43,8 +43,8 @@ class Transition {
  public:
     std::string move_string;
     Position start, end;
-    int value;
     Piece *taken_piece;
+    bool capture, promotion, castle, enPassant;
 
-    Transition(std::string move_string, bool capture, bool promotion, bool castle, Piece* tp);
+    Transition(std::string move_string, bool p, bool c, bool e, Piece* tp);
 };

@@ -100,18 +100,12 @@ void Board::print_board() {
     }
 }
 
-/*
-    Capture:    LSB set
-    Castle:     second LSB set
-    Promotion:  third LSB set
-*/
-Transition::Transition(std::string move_string, bool capture, bool promotion, bool castle, Piece *tp = nullptr) :
+Transition::Transition(std::string move_string, bool p, bool c, bool e, Piece* tp = nullptr) :
         start(Position(move_string[0], atoi(move_string.substr(1, 1).c_str()))),
-        end(Position(move_string[0], atoi(move_string.substr(1, 1).c_str()))) {
+        end(Position(move_string[2], atoi(move_string.substr(3, 1).c_str()))) {
     this->move_string = move_string;
-    value = 0;
-    value |= capture ? 1 : 0;
-    value |= promotion ? 2 : 0;
-    value |= castle ? 4 : 0;
+    promotion = p;
+    castle = c;
+    enPassant = e;
     this->taken_piece = tp;
 }

@@ -16,13 +16,13 @@ Game::~Game() {
     delete this->played_moves;
 }
 
+// Decides the side effects for a valid move
 Transition Game::generate_transition(std::string move_string) {
     Position start = Position(move_string[0], atoi(move_string.substr(1, 1).c_str()));
     Position end = Position(move_string[2], atoi(move_string.substr(3, 1).c_str()));
-    bool capture = false, promotion = false, castle = false;
+    bool promotion = false, castle = false, enPassant = false;
     Piece *tp = nullptr;
     if (board->is_piece_at(end)) {
-        capture = true;
         tp = board->get_piece_at(end);
     }
     Piece *p = board->get_piece_at(start);
@@ -32,7 +32,14 @@ Transition Game::generate_transition(std::string move_string) {
     if (p->type == Type::K && !has_moved(p) && (end.col == 'c' || end.col == 'g')) {
         castle = true;
     }
-    return Transition(move_string, capture, promotion, castle, tp);
+    if (p->type == Type::P && !played_moves->empty()) {
+        Transition tr = played_moves->back();
+        if (abs(tr.start.row - tr.end.row) == 2 && end.col == tr.end.col && start.row == tr.end.row) {
+            enPassant = true;
+            tp = board->get_piece_at(played_moves->back().end);
+        }
+    }
+    return Transition(move_string, promotion, castle, enPassant, tp);
 }
 
 void Game::move(std::string move_string, bool forced) {
@@ -43,25 +50,46 @@ void Game::move(std::string move_string, bool forced) {
 
     if (!forced) {
         if (valid_move(start, end)) {
-            played_moves->push_back(generate_transition(move_string));
+            Transition config = generate_transition(move_string);
             white_to_move = !white_to_move;
+            // Transport the piece to the desired square
+            if (config.castle) {
+                Piece *r = board->get_piece_at(Position((end.col == 'c') ? 'a' : 'h', end.row));
+                Piece *k = board->get_piece_at(start);
+                board->set_piece_at(nullptr, r->pos);
+                board->set_piece_at(nullptr, k->pos);
+                r->pos = Position((r->pos.col == 'a') ? 'd' : 'f', end.row);
+                k->pos = end;
+                board->set_piece_at(r, r->pos);
+                std::cout << "Rook at" << r->pos << "\n";
+                board->set_piece_at(k, k->pos);
+                return;
+            } else if (config.promotion) {
+                // Promote to queen by default
+                board->set_piece_at(new Queen(board->get_piece_at(start)->color, end), end);
+                delete board->get_piece_at(start);
+                board->set_piece_at(nullptr, start);
+                return;
+            } else if (config.enPassant) {
+                std::cout << played_moves->back().start << played_moves->back().end << "\n";
+                board->set_piece_at(nullptr, played_moves->back().end);
+            }
+            played_moves->push_back(config);
         } else {
             std::cout << "Invalid move\n";
             return;
         }
     }
 
-    if (board->is_piece_at(start)) {
-        board->get_piece_at(start)->pos = end;
-        board->set_piece_at(board->get_piece_at(start), end);
-        board->set_piece_at(nullptr, start);
-    }
+    board->get_piece_at(start)->pos = end;
+    board->set_piece_at(board->get_piece_at(start), end);
+    board->set_piece_at(nullptr, start);
 }
 
 bool Game::valid_move(Position start, Position end) {
     // Not null move
     if (start == end) {
-        std::cout << "Start == end error\n";
+        std::cout << "Start == End error\n";
         return false;
     }
     Color color;
@@ -74,11 +102,11 @@ bool Game::valid_move(Position start, Position end) {
         piece = board->get_piece_at(start);
     }
     // Turn check
-    color = piece->color;
-    if ((white_to_move && color != Color::WHITE) || (!white_to_move && color == Color::WHITE)) {
-        std::cout << "Not your turn\n";
-        return false;
-    }
+    // color = piece->color;
+    // if ((white_to_move && color != Color::WHITE) || (!white_to_move && color == Color::WHITE)) {
+    //     std::cout << "Not your turn\n";
+    //     return false;
+    // }
     // Reachable
     bool canReach;
     switch (piece->type) {
@@ -118,12 +146,13 @@ bool Game::can_reach(King *p, Position end) {
         if (board->is_piece_at(end)) {
             Piece *target = board->get_piece_at(end);
             if (target->color == p->color) {
+                std::cout << "at " << end << " no problem\n";
                 return false;
             }
         }
         return true;
     } else if (!has_moved(p)) {
-        if (end.col == 'c') {
+        if (end.col == 'c') {  // King side castle
             Piece *rook = board->get_piece_at(Position('a', p->pos.row));
             if (rook && !has_moved(rook)) {
                 if (!board->is_piece_at(Position('b', p->pos.row)) && 
@@ -145,8 +174,10 @@ bool Game::can_reach(King *p, Position end) {
     }
     return false;
 }
-
 bool Game::can_reach(Queen *p, Position end) {
+    if (board->is_piece_at(end) && board->get_piece_at(end)->color == p->color) {
+        return false;
+    }
     if (p->pos.row == end.row) {
         for (int k = 1; k < abs(p->pos.col - end.col); k++) {
             if (board->is_piece_at(Position(std::min(p->pos.col, end.col) + k, end.row))) {
@@ -160,6 +191,7 @@ bool Game::can_reach(Queen *p, Position end) {
             }
         }
     } else if (abs(p->pos.col - end.col) == abs(p->pos.row - end.row)) {
+        std::cout << "ding\n";
         int coef_col = (end.col - p->pos.col > 0) ? 1 : -1;
         int coef_row = (end.row - p->pos.row > 0) ? 1 : -1;
         for (int k = 1; k < abs(p->pos.row - end.row); k++) {
@@ -167,15 +199,16 @@ bool Game::can_reach(Queen *p, Position end) {
                 return false;
             }
         }
+    } else {
+        return false;
     }
 
+    return true;;
+}
+bool Game::can_reach(Rook *p, Position end) {
     if (board->is_piece_at(end) && board->get_piece_at(end)->color == p->color) {
         return false;
     }
-    return true;
-}
-
-bool Game::can_reach(Rook *p, Position end) {
     if (p->pos.row == end.row) {
         for (int k = 1; k < abs(p->pos.col - end.col); k++) {
             if (board->is_piece_at(Position(std::min(p->pos.col, end.col) + k, end.row))) {
@@ -188,15 +221,16 @@ bool Game::can_reach(Rook *p, Position end) {
                 return false;
             }
         }
+    } else {
+        return false;
     }
-
+    
+    return true;
+}
+bool Game::can_reach(Bishop *p, Position end) {
     if (board->is_piece_at(end) && board->get_piece_at(end)->color == p->color) {
         return false;
     }
-    return true;
-}
-
-bool Game::can_reach(Bishop *p, Position end) {
     if (abs(p->pos.col - end.col) == abs(p->pos.row - end.row)) {
         int coef_col = (end.col - p->pos.col > 0) ? 1 : -1;
         int coef_row = (end.row - p->pos.row > 0) ? 1 : -1;
@@ -205,26 +239,24 @@ bool Game::can_reach(Bishop *p, Position end) {
                 return false;
             }
         }
-    }
-
-    if (board->is_piece_at(end) && board->get_piece_at(end)->color == p->color) {
+    } else {
         return false;
     }
+
     return true;
 }
-
 bool Game::can_reach(Knight *p, Position end) {
-    if ((abs(end.col - p->pos.col) == 1 && abs(end.row - p->pos.row) == 2) &&
+    if ((abs(end.col - p->pos.col) == 1 && abs(end.row - p->pos.row) == 2) ||
             (abs(end.col - p->pos.col) == 2 && abs(end.row - p->pos.row) == 1)) {
         if (board->is_piece_at(end) && board->get_piece_at(end)->color == p->color) {
             return false;
         }
         return true;
+    } else {
+        std::cout << "No, i cant fly from " << p->pos << " to " << end << "\n";
     }
-
     return false;
 }
-
 bool Game::can_reach(Pawn *p, Position end) {
     if (p->color == Color::WHITE) {
         if ((end.row - p->pos.row == 1) &&
@@ -232,7 +264,8 @@ bool Game::can_reach(Pawn *p, Position end) {
                 (end.col == p->pos.col && !board->is_piece_at(end)))) {
                     return true;
             }
-        if (end.row - p->pos.row == 2 && !has_moved(p) && !board->is_piece_at(end) && !board->is_piece_at(Position(end.col, end.row - 1))) {
+        if (end.row - p->pos.row == 2 && end.col == p->pos.col && !has_moved(p) &&
+                !board->is_piece_at(end) && !board->is_piece_at(Position(end.col, end.row - 1))) {
             return true;
         }
         // Takes eps
@@ -244,11 +277,12 @@ bool Game::can_reach(Pawn *p, Position end) {
         }
     } else {
         if ((p->pos.row - end.row == 1) &&
-            ((abs(end.col - p->pos.col) == 1 && board->is_piece_at(end) && board->get_piece_at(end)->color == Color::BLACK) ||
+            ((abs(end.col - p->pos.col) == 1 && board->is_piece_at(end) && board->get_piece_at(end)->color == Color::WHITE) ||
                 (end.col == p->pos.col && !board->is_piece_at(end)))) {
                     return true;
             }
-        if (p->pos.row - end.row == 2 && !has_moved(p) && !board->is_piece_at(end) && !board->is_piece_at(Position(end.col, end.row + 1))) {
+        if (p->pos.row - end.row == 2 && end.col == p->pos.col && !has_moved(p) &&
+                !has_moved(p) && !board->is_piece_at(end) && !board->is_piece_at(Position(end.col, end.row + 1))) {
             return true;
         }
         // Takes eps
@@ -274,12 +308,3 @@ bool Game::has_moved(Piece *p) {
 void Game::print_board() {
     this->board->print_board();
 }
-
-bool Game::moving_linearly(Position start, Position end) {
-    return (start.col == end.col || start.row == end.row);
-}
-
-bool Game::moving_diagonaly(Position start, Position end) {
-    return abs(start.col-end.col) == abs(start.row-end.row);
-}
-
