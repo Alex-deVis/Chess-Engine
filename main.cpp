@@ -12,12 +12,12 @@ int main() {
     // game->move("g1f3", false);
     // game->move("e1g1", false);
 
-    game->move("b1a3", false);
-    game->move("b2b3", false);
-    game->move("c1b2", false);
-    game->move("d2d3", false);
-    game->move("d1d2", false);
-    game->move("e1c1", false);
+    // game->move("b1a3", false);
+    // game->move("b2b3", false);
+    // game->move("c1b2", false);
+    // game->move("d2d3", false);
+    // game->move("d1d2", false);
+    // game->move("e1c1", false);
 
 
     while (1) {
