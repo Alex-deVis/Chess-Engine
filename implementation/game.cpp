@@ -63,27 +63,24 @@ void Game::move(std::string move_string, bool forced) {
                 board->set_piece_at(r, r->pos);
                 std::cout << "Rook at" << r->pos << "\n";
                 board->set_piece_at(k, k->pos);
-                return;
             } else if (config.promotion) {
                 // Promote to queen by default
                 board->set_piece_at(new Queen(board->get_piece_at(start)->color, end), end);
                 delete board->get_piece_at(start);
                 board->set_piece_at(nullptr, start);
-                return;
-            } else if (config.enPassant) {
-                std::cout << played_moves->back().start << played_moves->back().end << "\n";
-                board->set_piece_at(nullptr, played_moves->back().end);
-            }
+            } else {
+                if (config.enPassant) {
+                    board->set_piece_at(nullptr, played_moves->back().end);
+                }
+                board->get_piece_at(start)->pos = end;
+                board->set_piece_at(board->get_piece_at(start), end);
+                board->set_piece_at(nullptr, start);
+            } 
             played_moves->push_back(config);
         } else {
             std::cout << "Invalid move\n";
-            return;
         }
-    }
-
-    board->get_piece_at(start)->pos = end;
-    board->set_piece_at(board->get_piece_at(start), end);
-    board->set_piece_at(nullptr, start);
+    }    
 }
 
 bool Game::valid_move(Position start, Position end) {
