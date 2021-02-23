@@ -8,6 +8,7 @@ public:
    ~Game();
 
    void move(std::string move_string, bool forced = true);
+   void undo_move();
    bool valid_move(Position start, Position end);
    void print_board();
 

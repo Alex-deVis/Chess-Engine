@@ -29,6 +29,7 @@ class Board {
     bool is_piece_at(Position position);
     Piece* get_piece_at(Position position);
     void set_piece_at(Piece *piece, Position position);
+    void move_piece(Piece *piece, Position position);
 
     void print_board();
 };
@@ -44,7 +45,7 @@ class Transition {
     std::string move_string;
     Position start, end;
     Piece *taken_piece;
-    bool capture, promotion, castle, enPassant;
+    bool promotion, castle, enPassant, forced;
 
-    Transition(std::string move_string, bool p, bool c, bool e, Piece* tp);
+    Transition(std::string move_string, bool p, bool c, bool e, bool f, Piece* tp);
 };

@@ -34,12 +34,13 @@ Transition Game::generate_transition(std::string move_string) {
     }
     if (p->type == Type::P && !played_moves->empty()) {
         Transition tr = played_moves->back();
-        if (abs(tr.start.row - tr.end.row) == 2 && end.col == tr.end.col && start.row == tr.end.row) {
+        if (abs(tr.start.row - tr.end.row) == 2 && end.col == tr.end.col && start.row == tr.end.row &&
+                p->color != board->get_piece_at(played_moves->back().end)->color) {
             enPassant = true;
             tp = board->get_piece_at(played_moves->back().end);
         }
     }
-    return Transition(move_string, promotion, castle, enPassant, tp);
+    return Transition(move_string, promotion, castle, enPassant, false, tp);
 }
 
 void Game::move(std::string move_string, bool forced) {
@@ -56,13 +57,10 @@ void Game::move(std::string move_string, bool forced) {
             if (config.castle) {
                 Piece *r = board->get_piece_at(Position((end.col == 'c') ? 'a' : 'h', end.row));
                 Piece *k = board->get_piece_at(start);
-                board->set_piece_at(nullptr, r->pos);
-                board->set_piece_at(nullptr, k->pos);
-                r->pos = Position((r->pos.col == 'a') ? 'd' : 'f', end.row);
-                k->pos = end;
-                board->set_piece_at(r, r->pos);
-                std::cout << "Rook at" << r->pos << "\n";
-                board->set_piece_at(k, k->pos);
+
+                Position r_pos((r->pos.col == 'a') ? 'd' : 'f', end.row);
+                board->move_piece(k, end);
+                board->move_piece(r, r_pos);
             } else if (config.promotion) {
                 // Promote to queen by default
                 board->set_piece_at(new Queen(board->get_piece_at(start)->color, end), end);
@@ -72,15 +70,42 @@ void Game::move(std::string move_string, bool forced) {
                 if (config.enPassant) {
                     board->set_piece_at(nullptr, played_moves->back().end);
                 }
-                board->get_piece_at(start)->pos = end;
-                board->set_piece_at(board->get_piece_at(start), end);
-                board->set_piece_at(nullptr, start);
+                Piece *tmp = board->get_piece_at(start);
+                board->move_piece(board->get_piece_at(start), end);
             } 
             played_moves->push_back(config);
-        } else {
-            std::cout << "Invalid move\n";
         }
-    }    
+    } else if (forced && board->is_piece_at(start)) {
+        Transition t(move_string, false, false, false, true, board->get_piece_at(end));
+        played_moves->push_back(t);
+        board->move_piece(board->get_piece_at(start), end);
+    }
+}
+
+void Game::undo_move() {
+    if (!played_moves->empty()) {
+        Transition t = played_moves->back();
+        if (t.forced) {
+            board->move_piece(board->get_piece_at(t.end), t.start);
+            board->move_piece(t.taken_piece, t.end);
+        } else if (t.castle) {
+            board->move_piece(board->get_piece_at(t.end), t.start);
+            Piece *r = board->get_piece_at(Position((t.end.col == 'c') ? 'd' : 'g', t.end.row));
+            board->move_piece(r, Position((r->pos.col == 'd') ? 'a' : 'h', r->pos.row));
+        } else if (t.promotion) {
+            Pawn *pawn = new Pawn(board->get_piece_at(t.end)->color, t.end);
+            delete board->get_piece_at(t.end);
+            board->move_piece(pawn, t.start);
+            board->move_piece(t.taken_piece, t.end);
+        } else if (t.enPassant) {
+            board->move_piece(board->get_piece_at(t.end), t.start);
+            board->move_piece(t.taken_piece, t.taken_piece->pos);
+        } else {
+            board->move_piece(board->get_piece_at(t.end), t.start);
+            board->move_piece(t.taken_piece, t.end);
+        }
+        played_moves->pop_back();
+    }
 }
 
 bool Game::valid_move(Position start, Position end) {

@@ -55,6 +55,16 @@ void Board::set_piece_at(Piece *piece, Position position) {
     (*board)[SIZE - position.row][position.col - 'a'] = piece;
 }
 
+void Board::move_piece(Piece *piece, Position position) {
+    if (piece) {
+        set_piece_at(nullptr, piece->pos);
+        piece->pos = position;
+        set_piece_at(piece, piece->pos);
+    } else {
+        set_piece_at(piece, position);
+    }
+}
+
 bool Board::is_piece_at(Position position) {
     return (*board)[SIZE - position.row][position.col - 'a'] != nullptr;
 }
@@ -100,12 +110,13 @@ void Board::print_board() {
     }
 }
 
-Transition::Transition(std::string move_string, bool p, bool c, bool e, Piece* tp = nullptr) :
+Transition::Transition(std::string move_string, bool p, bool c, bool e, bool f, Piece* tp = nullptr) :
         start(Position(move_string[0], atoi(move_string.substr(1, 1).c_str()))),
         end(Position(move_string[2], atoi(move_string.substr(3, 1).c_str()))) {
     this->move_string = move_string;
     promotion = p;
     castle = c;
     enPassant = e;
+    forced = f;
     this->taken_piece = tp;
 }
