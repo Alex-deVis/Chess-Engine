@@ -11,11 +11,13 @@ public:
    void undo_move();
    bool valid_move(Position start, Position end);
    void print_board();
+   void turn(Color color);
 
 private:
    Board *board;
    std::vector<Transition> *played_moves;
    bool white_to_move;
+   int taken_white, taken_black;
 
    // Check moving patterns
    bool can_reach(King *p, Position end);
@@ -25,11 +27,21 @@ private:
    bool can_reach(Knight *p, Position end);
    bool can_reach(Pawn *p, Position end);
 
-   // Helpers
-   bool has_moved(Piece *p);
-   Transition generate_transition(std::string move_string);
+   // Avoid check-related illegal moves
    bool will_remain_in_check_after(Position start, Position end);
    bool can_color_reach(Color color, Position target);
-   bool can_knight_reach(Position king_pos, int col_offset, int row_offset, Color frendly_color);
+
+   // Helpers
+   bool has_moved(Piece *p);
    bool is_knight_at(Position pos, int col_off, int row_off, Color color);
+   Transition generate_transition(std::string move_string);
+
+   // Engine
+   std::vector<std::string> possible_moves_for(Color color);
+   std::vector<std::string> possible_moves_for(King *p);
+   std::vector<std::string> possible_moves_for(Queen *p);
+   std::vector<std::string> possible_moves_for(Rook *p);
+   std::vector<std::string> possible_moves_for(Bishop *p);
+   std::vector<std::string> possible_moves_for(Knight *p);
+   std::vector<std::string> possible_moves_for(Pawn *p);
 };

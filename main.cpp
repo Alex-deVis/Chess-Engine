@@ -6,11 +6,15 @@ using namespace std;
 int main() {
     Game *game = new Game();
     string user_move;
-    
-    // game->move("f2f3");
-    // game->move("g2g4");
-    // game->move("e7e6");
-    // game->move("d8h4");
+        
+    game->move("b1b3");
+    game->move("c1c3");
+    game->move("d1d3");
+    game->move("f1a5");
+    game->move("g1a4");
+    game->move("g2g4");
+    game->move("f2f4");
+    game->move("e7e6");
 
     game->print_board();
     while(true) {
