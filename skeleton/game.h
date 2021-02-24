@@ -29,4 +29,7 @@ private:
    bool has_moved(Piece *p);
    Transition generate_transition(std::string move_string);
    bool will_remain_in_check_after(Position start, Position end);
+   bool can_color_reach(Color color, Position target);
+   bool can_knight_reach(Position king_pos, int col_offset, int row_offset, Color frendly_color);
+   bool is_knight_at(Position pos, int col_off, int row_off, Color color);
 };

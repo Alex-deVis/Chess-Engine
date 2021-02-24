@@ -51,6 +51,9 @@ void Game::move(std::string move_string, bool forced) {
 
     if (!forced) {
         if (valid_move(start, end)) {
+            if (board->get_piece_at(start)->type == Type::K) {
+                (board->get_piece_at(start)->color == Color::WHITE) ? (board->w_king = end) : (board->b_king = end);
+            }
             Transition config = generate_transition(move_string);
             white_to_move = !white_to_move;
             // Transport the piece to the desired square
@@ -70,12 +73,14 @@ void Game::move(std::string move_string, bool forced) {
                 if (config.enPassant) {
                     board->set_piece_at(nullptr, played_moves->back().end);
                 }
-                Piece *tmp = board->get_piece_at(start);
                 board->move_piece(board->get_piece_at(start), end);
-            } 
+            }
             played_moves->push_back(config);
         }
     } else if (forced && board->is_piece_at(start)) {
+         if (board->get_piece_at(start)->type == Type::K) {
+            (board->get_piece_at(start)->color == Color::WHITE) ? (board->w_king = end) : (board->b_king = end);
+        }
         Transition t(move_string, false, false, false, true, board->get_piece_at(end));
         played_moves->push_back(t);
         board->move_piece(board->get_piece_at(start), end);
@@ -158,7 +163,13 @@ bool Game::valid_move(Position start, Position end) {
         std::cout << "Piece at " << start << " cannot reach " << end << "\n";
         return false;
     }
+
     // In check verification
+    if (will_remain_in_check_after(start, end)) {
+        (board->get_piece_at(start)->color == Color::WHITE) ? std::cout << "White " : std::cout << "Black "; 
+        std::cout << " will remain in check if that move is played\n";
+        return false;
+    }
 
     return true;
 }
@@ -168,7 +179,6 @@ bool Game::can_reach(King *p, Position end) {
         if (board->is_piece_at(end)) {
             Piece *target = board->get_piece_at(end);
             if (target->color == p->color) {
-                std::cout << "at " << end << " no problem\n";
                 return false;
             }
         }
@@ -213,7 +223,6 @@ bool Game::can_reach(Queen *p, Position end) {
             }
         }
     } else if (abs(p->pos.col - end.col) == abs(p->pos.row - end.row)) {
-        std::cout << "ding\n";
         int coef_col = (end.col - p->pos.col > 0) ? 1 : -1;
         int coef_row = (end.row - p->pos.row > 0) ? 1 : -1;
         for (int k = 1; k < abs(p->pos.row - end.row); k++) {
@@ -329,4 +338,148 @@ bool Game::has_moved(Piece *p) {
 
 void Game::print_board() {
     this->board->print_board();
+}
+
+bool Game::can_color_reach(Color color, Position target) {
+    /* Verifying if enemy pieces can reach the position */
+    Piece *encountered_piece;
+    Piece *target_piece = board->get_piece_at(target);
+    if (target_piece && target_piece->color == color) {
+        return false;
+    }
+    // Pawn checking
+    if (color == WHITE) {
+        if (target_piece && target_piece->color!= color) {  // Enemy piece is target
+            for (int i=-1; i<=1; i+=2) {
+                if (target.col+i <= 'h' && target.col+i >= 'a' && target.row-1 >= 1) {
+                    encountered_piece = board->get_piece_at(Position(target.col+i, target.row-1));
+                    if (encountered_piece && encountered_piece->color == color && encountered_piece->type == Type::P) {
+                        return true;
+                    }
+                }
+            }
+        } else if (!target_piece) {
+            if (target.row-1 >= 1) {
+                encountered_piece = board->get_piece_at(Position(target.col, target.row-1));
+                if (encountered_piece && encountered_piece->color == color && encountered_piece->type == Type::P) {
+                    return true;
+                }
+            }
+        }
+    } else {
+        if (target_piece && target_piece->color!= color) {  // Enemy piece is target
+            for (int i=-1; i<=1; i+=2) {
+                if (target.col+i <= 'h' && target.col+i >= 'a' && target.row+1 <= 8) {
+                    encountered_piece = board->get_piece_at(Position(target.col+i, target.row+1));
+                    if (encountered_piece && encountered_piece->color == color && encountered_piece->type == Type::P) {
+                        return true;
+                    }
+                }
+            }
+        } else if (!target_piece) {
+            if (target.row+1 <= 8) {
+                encountered_piece = board->get_piece_at(Position(target.col, target.row+1));
+                if (encountered_piece && encountered_piece->color == color && encountered_piece->type == Type::P) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // Horizontally
+    for (char c = target.col-1; c >= 'a'; c--) {
+        encountered_piece = board->get_piece_at(Position(c, target.row));
+        if (encountered_piece && encountered_piece->color == color &&
+                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+            return true;
+        } else if (encountered_piece && encountered_piece->color != color) {
+            break;
+        }
+    }
+    for (char c = target.col+1; c <= 'h'; c++) {
+        encountered_piece = board->get_piece_at(Position(c, target.row));
+        if (encountered_piece && encountered_piece->color == color &&
+                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+            return true;
+        } else if (encountered_piece && encountered_piece->color != color) {
+            break;
+        }
+    }
+    // Vertically
+    for (int r = target.row-1; r >= 1; r--) {
+        encountered_piece = board->get_piece_at(Position(target.col, r));
+        if (encountered_piece && encountered_piece->color == color &&
+                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+            return true;
+        } else if (encountered_piece && encountered_piece->color != color) {
+            break;
+        }
+    }
+    for (int r = target.row+1; r <= 8; r++) {
+        encountered_piece = board->get_piece_at(Position(target.col, r));
+        if (encountered_piece && encountered_piece->color == color &&
+                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+            return true;
+        } else if (encountered_piece && encountered_piece->color != color) {
+            break;
+        }
+    }
+    // Diagonally
+    int coef_col[] = {1, 1, -1, -1};
+    int coef_row[] = {1, -1, -1, 1};
+    for (int k=0; k<4; k++) {
+        int dist;
+        if (coef_col[k] > 0) {
+            dist = 'h'-target.col;
+        } else {
+            dist = target.col-'a';
+        }
+        if (coef_row[k] > 0) {
+            dist = std::min(dist, 8-target.row);
+        } else {
+            dist = std::min(dist, 1-target.row);
+        }
+        for (int d=1; d<=dist; d++) {
+            encountered_piece = board->get_piece_at(Position(target.col + d*coef_col[k], target.row + d*coef_row[k]));
+            if (encountered_piece && encountered_piece->color == color &&
+                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::B))) {
+                return true;
+            } else if (encountered_piece && encountered_piece->color != color) {
+                break;
+            }
+        }
+    }
+    // Knight verification
+    return  is_knight_at(target, -2, -1, color) || is_knight_at(target, -2, 1, color) ||
+            is_knight_at(target, -1, -2, color) || is_knight_at(target, -1, 2, color) ||
+            is_knight_at(target, 1, -2, color) || is_knight_at(target, 1, 2, color) ||
+            is_knight_at(target, 2, -1, color) || is_knight_at(target, 2, 1, color);
+}
+
+bool Game::is_knight_at(Position pos, int col_off, int row_off, Color color) {
+    Piece *p;
+    if (pos.col+col_off >= 'a' && pos.col+col_off <= 'h' && pos.row+row_off >= 1 && pos.row+row_off <= 8) {
+        p = board->get_piece_at(Position(pos.col+col_off, pos.row+row_off));
+        return (p && p->color == color && p->type == Type::N);
+    }
+    return false;
+}
+
+bool Game::will_remain_in_check_after(Position start, Position end) {
+    bool in_check = false;
+    Color color = board->get_piece_at(start)->color;
+    Color enemy_color = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
+    Position king_pos = (color == Color::WHITE) ? board->w_king : board->b_king;
+    // Simulate move
+    if (board->get_piece_at(start)->type == Type::K) {
+        king_pos = end;
+    }
+    Piece *taken_piece = board->get_piece_at(end);
+    board->move_piece(board->get_piece_at(start), end);
+
+    in_check = can_color_reach(enemy_color, king_pos);
+
+    board->move_piece(board->get_piece_at(end), start);
+    board->move_piece(taken_piece, end);
+    return in_check;
 }

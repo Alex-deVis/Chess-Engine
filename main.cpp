@@ -7,11 +7,10 @@ int main() {
     Game *game = new Game();
     string user_move;
     
-    // game->move("b1b3");
-    // game->move("c1c3");
-    // game->move("d1d3");
-    // game->move("f1f3");
-    // game->move("g1g3");
+    // game->move("f2f3");
+    // game->move("g2g4");
+    // game->move("e7e6");
+    // game->move("d8h4");
 
     game->print_board();
     while(true) {
@@ -25,6 +24,7 @@ int main() {
         }
         game->print_board();
     }
+    delete game;
 
     return 0;
 }
