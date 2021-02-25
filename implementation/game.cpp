@@ -337,11 +337,6 @@ bool Game::can_reach(Pawn *p, Position end) {
 
 // Avoid illegal moves that will leave a player in check
 bool Game::will_remain_in_check_after(Position start, Position end) {
-    if (start == Position('d', 6) && end == Position('f', 7)) {
-        std::cout << "BEFORE: " << board->b_king << "\n";
-        print_board();
-    }
-
     bool in_check = false;
     Color color = board->get_piece_at(start)->color;
     Color enemy_color = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
@@ -354,10 +349,6 @@ bool Game::will_remain_in_check_after(Position start, Position end) {
     board->move_piece(board->get_piece_at(start), end);
 
     in_check = can_color_reach(enemy_color, king_pos);
-    if (start == Position('d', 6) && end == Position('f', 7) && in_check) {
-        std::cout << "AFTER\n";
-        print_board();
-    }
 
     board->move_piece(board->get_piece_at(end), start);
     board->move_piece(taken_piece, end);
@@ -502,7 +493,7 @@ void Game::undo_move() {
             board->move_piece(t.taken_piece, t.end);
         } else if (t.castle) {
             board->move_piece(board->get_piece_at(t.end), t.start);
-            Piece *r = board->get_piece_at(Position((t.end.col == 'c') ? 'd' : 'g', t.end.row));
+            Piece *r = board->get_piece_at(Position((t.end.col == 'c') ? 'd' : 'f', t.end.row));
             board->move_piece(r, Position((r->pos.col == 'd') ? 'a' : 'h', r->pos.row));
         } else if (t.promotion) {
             Pawn *pawn = new Pawn(board->get_piece_at(t.end)->color, t.end);
@@ -971,12 +962,6 @@ double Game::evaluate() {
 }
 
 bool Game::ended() {
-    if (!white_to_move && !are_possible_moves_for(Color::BLACK)) {
-        print_board();
-        if (valid_move(Position('d', 6), Position('f', 7))) {
-            std::cout << "PL yes\n";
-        }
-    }
     return (white_to_move && !are_possible_moves_for(Color::WHITE)) || (!white_to_move && !are_possible_moves_for(Color::BLACK));
 }
 

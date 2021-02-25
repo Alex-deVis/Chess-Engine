@@ -6,7 +6,7 @@ using namespace std;
 
 int main() {
     Game *game = new Game();
-    Engine bombard(game, Color::WHITE, 2);
+    Engine bombard(game, Color::WHITE, 4);
     string user_move;
     string engine_move;
 
@@ -28,6 +28,18 @@ int main() {
         game->move(user_move, false);
         game->print_board();
     }
+    // while (true) {
+    //     std::cin >> user_move;
+    //     if (user_move == "exit") {
+    //         break;
+    //     } else if (user_move == "undo") {
+    //         game->undo_move();
+    //     } else {
+    //         game->move(user_move, false);
+    //     }
+    //     game->print_board();
+    // }
+
     delete game;
 
     return 0;

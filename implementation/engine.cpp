@@ -15,7 +15,7 @@ void Engine::opponent_move(std::string move_string) {
 }
 
 std::string Engine::generate_move() {
-    std::pair<std::string, int> best = std::make_pair("", -INFINITY);
+    std::pair<std::string, double> best = std::make_pair("", -INFINITY);
     if (main_color == Color::BLACK) best.second = INFINITY;
     Color next_color = (main_color == Color::WHITE) ? Color::BLACK : Color::WHITE;
 
@@ -29,11 +29,9 @@ std::string Engine::generate_move() {
             best.second = rating;
         }
         temp_game->undo_move();
-        std::cout << move_string << " is rated " << rating << "\n";
+        // std::cout << move_string << " is rated " << rating << "\n";
     }
     delete temp_game;
-
-    std::cout << "WINNER: " << best.first << " is rated " << best.second << "\n";
 
     return best.first;
 }
