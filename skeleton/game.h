@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "board.h"
+#define INFINITY    1000
 
 class Game {
 public:
@@ -9,15 +10,21 @@ public:
 
    void move(std::string move_string, bool forced = true);
    void undo_move();
-   bool valid_move(Position start, Position end);
+   bool valid_move(Position start, Position end, bool suppress_msg = false);
    void print_board();
    void turn(Color color);
+   double evaluate();
+   bool ended();
+   void which_turn();
+   std::vector<std::string> possible_moves_for(Color color);
 
 private:
    Board *board;
    std::vector<Transition> *played_moves;
    bool white_to_move;
    int taken_white, taken_black;
+
+   bool are_possible_moves_for(Color color);
 
    // Check moving patterns
    bool can_reach(King *p, Position end);
@@ -37,7 +44,6 @@ private:
    Transition generate_transition(std::string move_string);
 
    // Engine
-   std::vector<std::string> possible_moves_for(Color color);
    std::vector<std::string> possible_moves_for(King *p);
    std::vector<std::string> possible_moves_for(Queen *p);
    std::vector<std::string> possible_moves_for(Rook *p);

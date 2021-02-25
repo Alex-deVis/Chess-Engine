@@ -92,7 +92,6 @@ void Game::move(std::string move_string, bool forced) {
         }
         played_moves->push_back(config);
         white_to_move = !white_to_move;
-        // std::cout << "Currently there are " << 16-taken_white << " white pieces and " << 16-taken_black << " black_pieces\n";
     } else if (forced && board->is_piece_at(start)) {
         if (board->get_piece_at(start)->type == Type::K) {
             if (board->get_piece_at(start)->color == Color::WHITE) {
@@ -115,16 +114,16 @@ void Game::move(std::string move_string, bool forced) {
 }
 
 /* Move checking*/
-bool Game::valid_move(Position start, Position end) {
+bool Game::valid_move(Position start, Position end, bool suppress_msg) {
     // Not null move
     if (start == end) {
-        std::cout << "Start == End error\n";
+        if (!suppress_msg) std::cout << "Start == End error\n";
         return false;
     }
     Piece *piece;
     // Present piece
     if (!board->is_piece_at(start)) {
-        std::cout << "No piece at start\n";
+        if (!suppress_msg) std::cout << "No piece at start\n";
         return false;
     } else {
         piece = board->get_piece_at(start);
@@ -133,7 +132,7 @@ bool Game::valid_move(Position start, Position end) {
     Color to_move = (white_to_move) ? Color::WHITE : Color::BLACK;
 
     if (piece->color != to_move) {
-        std::cout << "Not your turn\n";
+        if (!suppress_msg) std::cout << "Not your turn\n";
         return false;
     }
     // Reachable
@@ -162,14 +161,14 @@ bool Game::valid_move(Position start, Position end) {
             return false;
     }
     if (canReach == false) {
-        std::cout << "Piece at " << start << " cannot reach " << end << "\n";
+        if (!suppress_msg) std::cout << "Piece at " << start << " cannot reach " << end << "\n";
         return false;
     }
 
     // In check verification
     if (will_remain_in_check_after(start, end)) {
-        (board->get_piece_at(start)->color == Color::WHITE) ? std::cout << "White " : std::cout << "Black "; 
-        std::cout << " will remain in check if that move is played\n";
+        if (!suppress_msg) (board->get_piece_at(start)->color == Color::WHITE) ? std::cout << "White " : std::cout << "Black "; 
+        if (!suppress_msg) std::cout << " will remain in check if that move is played\n";
         return false;
     }
 
@@ -508,8 +507,8 @@ void Game::undo_move() {
             board->move_piece(t.taken_piece, t.end);
         }
         played_moves->pop_back();
-        white_to_move = !white_to_move;
-        if (t.taken_piece != nullptr) {
+        if (!t.forced) { white_to_move = !white_to_move; }
+        if (t.taken_piece) {
             if (t.taken_piece->color == Color::WHITE) {
                 taken_white--;
             } else {
@@ -619,6 +618,90 @@ std::vector<std::string> Game::possible_moves_for(Color color) {
     return pos_moves;
 }
 
+bool Game::are_possible_moves_for(Color color) {
+    std::vector<std::string> pos_moves;
+    std::vector<std::string> aux;
+    Piece *p;
+    if (color == Color::WHITE) {
+        int ct=taken_white;
+        for (int r=1; r<=8; r++) {
+            for (char c='a'; c<='h'; c++) {
+                p = board->get_piece_at(Position(c, r));
+                if (p && p->color == Color::WHITE) {
+                    switch (p->type) {
+                        case K:
+                            aux = possible_moves_for((King*)p);
+                            break;
+                        case Q:
+                            aux = possible_moves_for((Queen*)p);
+                            break;
+                        case R:
+                            aux = possible_moves_for((Rook*)p);
+                            break;
+                        case B:
+                            aux = possible_moves_for((Bishop*)p);
+                            break;
+                        case N:
+                            aux = possible_moves_for((Knight*)p);
+                            break;
+                        case P:
+                            aux = possible_moves_for((Pawn*)p);
+                            break;
+                        default:
+                            assert("Invalid piece on the board");
+                            return false;
+                    }
+                    if (!aux.empty()) {
+                        return true;
+                    }
+                    if (++ct == 16) {
+                        break;
+                    }
+                }
+            }
+        }
+    } else {
+        int ct=taken_black;
+        for (int r=8; r>=1; r--) {
+            for (char c='a'; c<='h'; c++) {
+                p = board->get_piece_at(Position(c, r));
+                if (p && p->color == Color::BLACK) {
+                    switch (p->type) {
+                        case K:
+                            aux = possible_moves_for((King*)p);
+                            break;
+                        case Q:
+                            aux = possible_moves_for((Queen*)p);
+                            break;
+                        case R:
+                            aux = possible_moves_for((Rook*)p);
+                            break;
+                        case B:
+                            aux = possible_moves_for((Bishop*)p);
+                            break;
+                        case N:
+                            aux = possible_moves_for((Knight*)p);
+                            break;
+                        case P:
+                            aux = possible_moves_for((Pawn*)p);
+                            break;
+                        default:
+                            assert("Invalid piece on the board");
+                            return false;
+                    }
+                    if (!aux.empty()) {
+                        return true;
+                    }
+                    if (++ct == 16) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 std::vector<std::string> Game::possible_moves_for(King *p) {
     std::vector<std::string> pos_moves;
     std::string base = std::string(1, p->pos.col) + std::to_string(p->pos.row);
@@ -628,8 +711,8 @@ std::vector<std::string> Game::possible_moves_for(King *p) {
             if (i == 0 && j == 0) {
                 continue;
             }
-            if (p->pos.col+i <= 'h' && p->pos.col >= 'a' && p->pos.row+j <= 8 && p->pos.row+j >= 1) {
-                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row+j))) {
+            if (p->pos.col+i <= 'h' && p->pos.col+i >= 'a' && p->pos.row+j <= 8 && p->pos.row+j >= 1) {
+                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row+j), true)) {
                     std::string move_string = base + std::string(1, p->pos.col+i) + std::to_string(p->pos.row+j);
                     pos_moves.push_back(move_string);
                 }
@@ -637,11 +720,11 @@ std::vector<std::string> Game::possible_moves_for(King *p) {
         }
     }
     if (!has_moved(p)) {
-        if (valid_move(p->pos, Position('c', p->pos.row))) {
+        if (valid_move(p->pos, Position('c', p->pos.row), true)) {
             std::string move_string = base + std::string(1, 'c') + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
-        if (valid_move(p->pos, Position('g', p->pos.row))) {
+        if (valid_move(p->pos, Position('g', p->pos.row), true)) {
             std::string move_string = base + std::string(1, 'g') + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
@@ -655,7 +738,7 @@ std::vector<std::string> Game::possible_moves_for(Queen *p) {
 
     // Horizontally
     for (char c=p->pos.col-1; c>='a'; c--) {
-        if (valid_move(p->pos, Position(c, p->pos.row))) {
+        if (valid_move(p->pos, Position(c, p->pos.row), true)) {
             std::string move_string = base + std::string(1, c) + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
@@ -664,7 +747,7 @@ std::vector<std::string> Game::possible_moves_for(Queen *p) {
         }
     }
     for (char c=p->pos.col+1; c<='h'; c++) {
-        if (valid_move(p->pos, Position(c, p->pos.row))) {
+        if (valid_move(p->pos, Position(c, p->pos.row), true)) {
             std::string move_string = base + std::string(1, c) + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
@@ -674,7 +757,7 @@ std::vector<std::string> Game::possible_moves_for(Queen *p) {
     }
     // Vertically
     for (int r=p->pos.row-1; r>=1; r--) {
-        if (valid_move(p->pos, Position(p->pos.col, r))) {
+        if (valid_move(p->pos, Position(p->pos.col, r), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(r);
             pos_moves.push_back(move_string);
         }
@@ -683,7 +766,7 @@ std::vector<std::string> Game::possible_moves_for(Queen *p) {
         }
     }
     for (int r=p->pos.row+1; r<=8; r++) {
-        if (valid_move(p->pos, Position(p->pos.col, r))) {
+        if (valid_move(p->pos, Position(p->pos.col, r), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(r);
             pos_moves.push_back(move_string);
         }
@@ -699,7 +782,7 @@ std::vector<std::string> Game::possible_moves_for(Queen *p) {
             if (p->pos.col+coef_col[k]*d >= 'a' && p->pos.col+coef_col[k]*d <= 'h'
                     && p->pos.row+coef_row[k]*d >= 1 && p->pos.row+coef_row[k]*d <= 8) {
                 Position tmp(p->pos.col+coef_col[k]*d, p->pos.row+coef_row[k]*d);
-                if (valid_move(p->pos, tmp)) {
+                if (valid_move(p->pos, tmp, true)) {
                     std::string move_string = base + std::string(1, tmp.col) + std::to_string(tmp.row);
                     pos_moves.push_back(move_string);
                 }
@@ -718,7 +801,7 @@ std::vector<std::string> Game::possible_moves_for(Rook *p) {
 
     // Horizontally
     for (char c=p->pos.col-1; c>='a'; c--) {
-        if (valid_move(p->pos, Position(c, p->pos.row))) {
+        if (valid_move(p->pos, Position(c, p->pos.row), true)) {
             std::string move_string = base + std::string(1, c) + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
@@ -727,7 +810,7 @@ std::vector<std::string> Game::possible_moves_for(Rook *p) {
         }
     }
     for (char c=p->pos.col+1; c<='h'; c++) {
-        if (valid_move(p->pos, Position(c, p->pos.row))) {
+        if (valid_move(p->pos, Position(c, p->pos.row), true)) {
             std::string move_string = base + std::string(1, c) + std::to_string(p->pos.row);
             pos_moves.push_back(move_string);
         }
@@ -737,7 +820,7 @@ std::vector<std::string> Game::possible_moves_for(Rook *p) {
     }
     // Vertically
     for (int r=p->pos.row-1; r>=1; r--) {
-        if (valid_move(p->pos, Position(p->pos.col, r))) {
+        if (valid_move(p->pos, Position(p->pos.col, r), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(r);
             pos_moves.push_back(move_string);
         }
@@ -746,7 +829,7 @@ std::vector<std::string> Game::possible_moves_for(Rook *p) {
         }
     }
     for (int r=p->pos.row+1; r<=8; r++) {
-        if (valid_move(p->pos, Position(p->pos.col, r))) {
+        if (valid_move(p->pos, Position(p->pos.col, r), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(r);
             pos_moves.push_back(move_string);
         }
@@ -768,7 +851,7 @@ std::vector<std::string> Game::possible_moves_for(Bishop *p) {
             if (p->pos.col+coef_col[k]*d >= 'a' && p->pos.col+coef_col[k]*d <= 'h'
                     && p->pos.row+coef_row[k]*d >= 1 && p->pos.row+coef_row[k]*d <= 8) {
                 Position tmp(p->pos.col+coef_col[k]*d, p->pos.row+coef_row[k]*d);
-                if (valid_move(p->pos, tmp)) {
+                if (valid_move(p->pos, tmp, true)) {
                     std::string move_string = base + std::string(1, tmp.col) + std::to_string(tmp.row);
                     pos_moves.push_back(move_string);
                 }
@@ -791,7 +874,7 @@ std::vector<std::string> Game::possible_moves_for(Knight *p) {
             int row_off = 3 - std::abs(col_off[k]);
             for (int r=-row_off; r<=row_off; r+=row_off*2) {
                 if (p->pos.row+r <= 8 && p->pos.row+r >= 1) {
-                    if (valid_move(p->pos, Position(p->pos.col+col_off[k], p->pos.row+r))) {
+                    if (valid_move(p->pos, Position(p->pos.col+col_off[k], p->pos.row+r), true)) {
                         std::string move_string = base + std::string(1, p->pos.col+col_off[k]) + std::to_string(p->pos.row+r);
                         pos_moves.push_back(move_string);
                     }
@@ -809,30 +892,78 @@ std::vector<std::string> Game::possible_moves_for(Pawn *p) {
     if (p->color == Color::WHITE) {
         for (int i=-1; i<=1; i++) {
             if (p->pos.col+i >= 'a' && p->pos.col+i <='h') {
-                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row+1))) {
+                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row+1), true)) {
                     std::string move_string = base + std::string(1, p->pos.col+i) + std::to_string(p->pos.row+1);
                     pos_moves.push_back(move_string);
                 }
             }
         }
-        if (!has_moved(p) && valid_move(p->pos, Position(p->pos.col, p->pos.row+2))) {
+        if (!has_moved(p) && valid_move(p->pos, Position(p->pos.col, p->pos.row+2), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(p->pos.row+2);
             pos_moves.push_back(move_string);
         }
     } else {
         for (int i=-1; i<=1; i++) {
             if (p->pos.col+i >= 'a' && p->pos.col+i <='h') {
-                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row-1))) {
+                if (valid_move(p->pos, Position(p->pos.col+i, p->pos.row-1), true)) {
                     std::string move_string = base + std::string(1, p->pos.col+i) + std::to_string(p->pos.row-1);
                     pos_moves.push_back(move_string);
                 }
             }
         }
-        if (!has_moved(p) && valid_move(p->pos, Position(p->pos.col, p->pos.row-2))) {
+        if (!has_moved(p) && valid_move(p->pos, Position(p->pos.col, p->pos.row-2), true)) {
             std::string move_string = base + std::string(1, p->pos.col) + std::to_string(p->pos.row-2);
             pos_moves.push_back(move_string);
         }
     }
 
     return pos_moves;
+}
+
+double Game::evaluate() {
+    if (ended()) {
+        if (white_to_move) {
+            // Checkmate for black
+            if (can_color_reach(Color::BLACK, board->w_king)) {
+                return -INFINITY;
+            } else { // Stalemate
+                return 0;
+            }
+        } else {
+            // Checkmate for white
+            if (can_color_reach(Color::WHITE, board->b_king)) {
+                return INFINITY;
+            } else {  // Stalemate
+                return 0;
+            }
+        }
+    }
+    Piece *p;
+    double score=0;
+    int ct=taken_white+taken_black;
+    for (int r=1; r<=8; r++) {
+        for (char c='a'; c<='h'; c++) {
+            p = board->get_piece_at(Position(c, r));
+            if (p) {
+                if (p->color == Color::WHITE) {
+                    score += p->points;
+                } else {
+                    score -= p->points;
+                }
+                ct++;
+                if (ct == 32) {
+                    break;
+                }
+            }
+        }
+    }
+    return score;
+}
+
+bool Game::ended() {
+    return (white_to_move && !are_possible_moves_for(Color::WHITE)) || (!white_to_move && !are_possible_moves_for(Color::BLACK));
+}
+
+void Game::which_turn() {
+    white_to_move ? std::cout << "WHITE\n" : std::cout << "BLACK\n";
 }

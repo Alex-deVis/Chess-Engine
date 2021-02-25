@@ -1,5 +1,5 @@
-build: pieces.o board.o game.o
-	g++ -g -Wall -Wextra -o main main.cpp pieces.o board.o game.o
+build: pieces.o board.o game.o engine.o
+	g++ -g -Wall -Wextra -o main main.cpp pieces.o board.o game.o engine.o
 	rm *.o
 
 pieces.o:
@@ -10,6 +10,9 @@ board.o:
 
 game.o:
 	g++ -g -Wall -Wextra -c ./implementation/game.cpp
+
+engine.o:
+	g++ -g -Wall -Wextra -c ./implementation/engine.cpp
 
 run: build
 	./main
