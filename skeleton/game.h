@@ -6,6 +6,7 @@
 class Game {
 public:
    Game();
+   Game(Game *game);
    ~Game();
 
    void move(std::string move_string, bool forced = true);
@@ -17,6 +18,8 @@ public:
    bool ended();
    void which_turn();
    std::vector<std::string> possible_moves_for(Color color);
+   bool is_piece_at(Position pos);
+   std::string last_played_move();
 
 private:
    Board *board;

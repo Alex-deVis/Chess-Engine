@@ -8,6 +8,14 @@ Game::Game() {
     this->taken_black = 0;
 }
 
+Game::Game(Game *game) {
+    this->white_to_move = game->white_to_move;
+    this->taken_white = game->taken_white;
+    this->taken_black = game->taken_black;
+    this->board = new Board(game->board);
+    this->played_moves = new std::vector<Transition>();
+}
+
 Game::~Game() {
     delete this->board;
     for (Transition t : *played_moves) {
@@ -56,13 +64,6 @@ void Game::move(std::string move_string, bool forced) {
     Position end = Position(move_string[2], atoi(move_string.substr(3, 1).c_str()));
 
     if (!forced && valid_move(start, end)) {
-        if (board->get_piece_at(start)->type == Type::K) {
-            if (board->get_piece_at(start)->color == Color::WHITE) {
-                board->w_king = end;
-            } else {
-                board->b_king = end;
-            }
-        }
         Transition config = generate_transition(move_string);
         // Transport the piece to the desired square
         if (config.castle) {
@@ -336,6 +337,11 @@ bool Game::can_reach(Pawn *p, Position end) {
 
 // Avoid illegal moves that will leave a player in check
 bool Game::will_remain_in_check_after(Position start, Position end) {
+    if (start == Position('d', 6) && end == Position('f', 7)) {
+        std::cout << "BEFORE: " << board->b_king << "\n";
+        print_board();
+    }
+
     bool in_check = false;
     Color color = board->get_piece_at(start)->color;
     Color enemy_color = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
@@ -348,6 +354,10 @@ bool Game::will_remain_in_check_after(Position start, Position end) {
     board->move_piece(board->get_piece_at(start), end);
 
     in_check = can_color_reach(enemy_color, king_pos);
+    if (start == Position('d', 6) && end == Position('f', 7) && in_check) {
+        std::cout << "AFTER\n";
+        print_board();
+    }
 
     board->move_piece(board->get_piece_at(end), start);
     board->move_piece(taken_piece, end);
@@ -961,9 +971,23 @@ double Game::evaluate() {
 }
 
 bool Game::ended() {
+    if (!white_to_move && !are_possible_moves_for(Color::BLACK)) {
+        print_board();
+        if (valid_move(Position('d', 6), Position('f', 7))) {
+            std::cout << "PL yes\n";
+        }
+    }
     return (white_to_move && !are_possible_moves_for(Color::WHITE)) || (!white_to_move && !are_possible_moves_for(Color::BLACK));
 }
 
 void Game::which_turn() {
     white_to_move ? std::cout << "WHITE\n" : std::cout << "BLACK\n";
+}
+
+bool Game::is_piece_at(Position pos) {
+    return board->is_piece_at(pos);
+}
+
+std::string Game::last_played_move() {
+    return played_moves->back().move_string;
 }

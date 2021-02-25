@@ -6,13 +6,14 @@ using namespace std;
 
 int main() {
     Game *game = new Game();
-    Engine bombard(game, Color::WHITE, 3);
+    Engine bombard(game, Color::WHITE, 2);
     string user_move;
     string engine_move;
 
     game->move("g7g5");
     game->move("f7f5");
     game->move("d1h6");
+    game->move("g8d6");
 
     game->print_board();
     while(true) {
@@ -22,7 +23,6 @@ int main() {
         game->print_board();
         cin >> user_move;
         if (user_move == "exit") {
-            std::cout << bombard.do_undo_count << "\n";
             break;
         }
         game->move(user_move, false);

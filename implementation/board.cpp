@@ -30,6 +30,42 @@ Board::Board() : w_king(Position('e', WHITE_PIECES_ROW)), b_king(Position('e', B
     }
 }
 
+Board::Board(Board *b) : w_king(b->w_king), b_king(b->b_king) {
+    board = new std::vector<std::vector<Piece*>>(8, std::vector<Piece*>(SIZE, nullptr));
+    Piece *p;
+
+    for (int r=1; r<=8; r++) {
+        for (char c='a'; c<='h'; c++) {
+            if (b->is_piece_at(Position(c, r))) {
+                p = b->get_piece_at(Position(c, r));
+                switch (p->type) {
+                    case K:
+                        this->add_piece(new King(p->color, p->pos));
+                        break;
+                    case Q:
+                        this->add_piece(new Queen(p->color, p->pos));
+                        break;
+                    case R:
+                        this->add_piece(new Rook(p->color, p->pos));
+                        break;
+                    case B:
+                        this->add_piece(new Bishop(p->color, p->pos));
+                        break;
+                    case N:
+                        this->add_piece(new Knight(p->color, p->pos));
+                        break;
+                    case P:
+                        this->add_piece(new Pawn(p->color, p->pos));
+                        break;
+                    default:
+                        std::cout << p->pos << "\n";
+                        assert("Invalid piece on the board");
+                }
+            }
+        }
+    }
+}
+
 Board::~Board() {
     for (auto line : (*board)) {
         for (auto p : line) {
@@ -60,6 +96,13 @@ void Board::move_piece(Piece *piece, Position position) {
         set_piece_at(nullptr, piece->pos);
         piece->pos = position;
         set_piece_at(piece, piece->pos);
+        if (piece->type == Type::K) {
+            if (piece->color == Color::WHITE) {
+                w_king = piece->pos;
+            } else {
+                b_king = piece->pos;
+            }
+        }
     } else {
         set_piece_at(piece, position);
     }

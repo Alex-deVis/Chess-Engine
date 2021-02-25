@@ -8,14 +8,12 @@ public:
 
     void opponent_move(std::string move_string);
     std::string generate_move();
-    int do_undo_count;
 
 private:
     Game *game;
     Game *thinking_game;
-    Color color;
+    Color main_color;
     int default_depth;
 
-    double move_score(int depth, Color color);
-    double evaluate_position();
+    double rate_move(Game *g, int depth, Color c);
 };
