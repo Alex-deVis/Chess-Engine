@@ -15,5 +15,6 @@ private:
     Color main_color;
     int default_depth;
 
+    double rate_move(std::string& moves, Game *temp_game, int depth, Color color);
     double rate_move(Game *g, int depth, Color c);
 };

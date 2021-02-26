@@ -1,5 +1,6 @@
 #include "../skeleton/engine.h"
 #include <iomanip>
+#include <sstream>
 
 Engine::Engine(Game *game, Color c = Color::WHITE, int dd) {
     this->game = game;
@@ -21,18 +22,18 @@ std::string Engine::generate_move() {
 
     Game *temp_game = new Game(game);
     for (std::string move_string : temp_game->possible_moves_for(main_color)) {
-        temp_game->move(move_string, false);
-        double rating = rate_move(temp_game, default_depth-1, next_color);
-        if ((main_color == Color::WHITE && rating > best.second) ||
-                (main_color == Color::BLACK && rating < best.second)) {
-            best.first = move_string;
-            best.second = rating;
+        if (temp_game->move(move_string, false)) {
+            double rating = rate_move(temp_game, default_depth-1, next_color);
+            if ((main_color == Color::WHITE && rating > best.second) ||
+                    (main_color == Color::BLACK && rating < best.second)) {
+                best.first = move_string;
+                best.second = rating;
+            }
+            temp_game->undo_move();
         }
-        temp_game->undo_move();
-        // std::cout << move_string << " is rated " << rating << "\n";
     }
     delete temp_game;
-
+    
     return best.first;
 }
 
