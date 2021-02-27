@@ -1,5 +1,6 @@
 #pragma once
 #include "game.h"
+#define INFINITY    40000
 
 class Engine {
 public:
@@ -15,6 +16,8 @@ private:
     Color main_color;
     int default_depth;
 
-    double rate_move(std::string& moves, Game *temp_game, int depth, Color color);
-    double rate_move(Game *g, int depth, Color c);
+    int rate_move(std::string& moves, Game *temp_game, int depth, Color color);
+    int rate_move(Game *g, int depth, Color c);
+    int evaluate(Game *g);
+    int evaluate_piece(Piece *p, bool endgame = false);
 };

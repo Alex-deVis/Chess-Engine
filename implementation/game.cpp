@@ -285,6 +285,10 @@ Transition Game::generate_transition(std::string move_string) {
     return Transition(move_string, promotion, castle, enPassant, false, tp);
 }
 
+void Game::clear_move_queue() {
+    this->played_moves->clear();
+}
+
 // Generates a list of moves for a piece type
 std::vector<std::string> Game::possible_moves_for(King *p) {
     std::vector<std::string> pos_moves;
@@ -782,45 +786,6 @@ bool Game::can_reach(Pawn *p, Position end) {
 /*  Engine related 
 *   Functions used strictly by the engine
 */
-double Game::evaluate() {
-    if (ended()) {
-        if (white_to_move) {
-            // Checkmate for black
-            if (can_color_reach(Color::BLACK, board->w_king)) {
-                return -INFINITY;
-            } else { // Stalemate
-                return 0;
-            }
-        } else {
-            // Checkmate for white
-            if (can_color_reach(Color::WHITE, board->b_king)) {
-                return INFINITY;
-            } else {  // Stalemate
-                return 0;
-            }
-        }
-    }
-    Piece *p;
-    double score=0;
-    int ct=taken_white+taken_black;
-    for (int r=1; r<=8; r++) {
-        for (char c='a'; c<='h'; c++) {
-            p = board->get_piece_at(Position(c, r));
-            if (p) {
-                if (p->color == Color::WHITE) {
-                    score += p->points;
-                } else {
-                    score -= p->points;
-                }
-                ct++;
-                if (ct == 32) {
-                    break;
-                }
-            }
-        }
-    }
-    return score;
-}
 
 // Decides if a player is out of moves
 bool Game::are_possible_moves_for(Color color) {
@@ -993,6 +958,38 @@ std::vector<std::string> Game::possible_moves_for(Color color) {
     return pos_moves;
 }
 
-void Game::clear_move_queue() {
-    this->played_moves->clear();
+Board* Game::get_board() {
+    return this->board;
+}
+
+int Game::get_taken(Color color) {
+    return (color == Color::WHITE) ? taken_white : taken_black;
+}
+
+int Game::who_won() {
+    if (ended()) {
+        // Checkmate for black
+        if (can_color_reach(Color::BLACK, board->w_king)) {
+            return -1;
+        }
+        // Checkmate for white
+        if (can_color_reach(Color::WHITE, board->b_king)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Endgame starts when there are no more queens
+bool Game::in_the_endgame() {
+    int ct=0;
+    for (auto t : *played_moves) {
+        if (t.taken_piece && t.taken_piece->type == Type::Q) {
+            ct++;
+        }
+    }
+    if (ct >= 2) {
+        return true;
+    }
+    return false;
 }

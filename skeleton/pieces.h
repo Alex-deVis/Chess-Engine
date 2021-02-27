@@ -7,12 +7,12 @@
 #define BLACK_PIECES_ROW        8
 #define BLACK_PAWNS_ROW         7
 
-#define KING_POINTS             100
-#define QUEEN_POINTS            9
-#define ROOK_POINTS             5
-#define BISHOP_POINTS           3.25
-#define KNIGHT_POINTS           3.15
-#define PAWN_POINTS             1
+#define KING_POINTS             20000
+#define QUEEN_POINTS            900
+#define ROOK_POINTS             500
+#define BISHOP_POINTS           330
+#define KNIGHT_POINTS           320
+#define PAWN_POINTS             100
 
 enum Type {K, Q, R, B, N, P};
 enum Color {WHITE, BLACK};
@@ -35,39 +35,37 @@ class Piece {
     Type type;
     Color color;
     Position pos;
-    float points;
+    int points;
 
-    Piece(Type t, Color c, Position p, float pts);
-    
-    void move_to(Position target);
+    Piece(Type t, Color c, Position p, int pts);
 };
 
 class King : public Piece {
  public:
-    King(Color c, Position pos);
+    King(Color c, Position pos, int pts = KING_POINTS);
 };
 
 class Queen : public Piece {
  public:
-    Queen(Color c, Position pos);
+    Queen(Color c, Position pos, int pts = QUEEN_POINTS);
 };
 
 class Rook : public Piece {
  public:
-    Rook(Color c, Position pos);
+    Rook(Color c, Position pos, int pts = ROOK_POINTS);
 };
 
 class Bishop : public Piece {
  public:
-    Bishop(Color c, Position pos);
+    Bishop(Color c, Position pos, int pts = BISHOP_POINTS);
 };
 
 class Knight : public Piece {
  public:
-    Knight(Color c, Position pos);
+    Knight(Color c, Position pos, int pts = KNIGHT_POINTS);
 };
 
 class Pawn : public Piece {
  public:
-    Pawn(Color c, Position pos);
+    Pawn(Color c, Position pos, int pts = PAWN_POINTS);
 };
