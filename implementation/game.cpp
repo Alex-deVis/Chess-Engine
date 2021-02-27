@@ -992,3 +992,7 @@ std::vector<std::string> Game::possible_moves_for(Color color) {
 
     return pos_moves;
 }
+
+void Game::clear_move_queue() {
+    this->played_moves->clear();
+}

@@ -32,6 +32,7 @@ std::string Engine::generate_move() {
             temp_game->undo_move();
         }
     }
+    temp_game->clear_move_queue();
     delete temp_game;
     
     return best.first;

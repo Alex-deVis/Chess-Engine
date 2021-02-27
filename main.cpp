@@ -10,6 +10,13 @@ int main() {
     string user_move;
     string engine_move;
 
+    game->move("e2e4", false);
+    game->move("b8a6", false);
+    game->move("f1a6", false);
+    game->move("b7a6", false);
+    game->move("g1f3", false);
+    game->move("d7d5", false);
+
     game->print_board();
     while(true) {
         // Player
@@ -30,6 +37,7 @@ int main() {
         if (game->ended(false)) {
             break;
         }
+        std::cout << "\n";
     }
     delete game;
 

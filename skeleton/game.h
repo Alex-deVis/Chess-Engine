@@ -19,6 +19,7 @@ public:
    void undo_move();
    double evaluate();
    std::vector<std::string> possible_moves_for(Color color);
+   void clear_move_queue();
 
 private:
    Board *board;
