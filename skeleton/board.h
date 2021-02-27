@@ -24,6 +24,7 @@ class Board {
     Position w_king, b_king;
 
     Board();
+    Board(Board *b);
     ~Board();
 
     bool is_piece_at(Position position);
