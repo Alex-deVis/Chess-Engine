@@ -78,49 +78,6 @@ void Engine::opponent_move(std::string move_string) {
     this->game->move(move_string, false);
 }
 
-std::string Engine::generate_move() {
-    std::pair<std::string, int> best = std::make_pair("", -INFINITY);
-    if (main_color == Color::BLACK) best.second = INFINITY;
-    Color next_color = (main_color == Color::WHITE) ? Color::BLACK : Color::WHITE;
-
-    Game *temp_game = new Game(game);
-    for (std::string move_string : temp_game->possible_moves_for(main_color)) {
-        if (temp_game->move(move_string, false)) {
-            int rating = rate_move(temp_game, default_depth-1, next_color);
-            if ((main_color == Color::WHITE && rating > best.second) ||
-                    (main_color == Color::BLACK && rating < best.second)) {
-                best.first = move_string;
-                best.second = rating;
-            }
-            temp_game->undo_move();
-        }
-    }
-    temp_game->clear_move_queue();
-    delete temp_game;
-    
-    return best.first;
-}
-
-int Engine::rate_move(Game *temp_game, int depth, Color color) {
-    if (temp_game->ended() || depth == 0) {
-        return evaluate(temp_game);
-    }
-    Color next_color = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
-    int best_rating = (color == Color::WHITE) ? -INFINITY : INFINITY;
-
-    for (std::string move_string : temp_game->possible_moves_for(color)) {
-        temp_game->move(move_string, false);
-        int rating = rate_move(temp_game, depth-1, next_color);
-        if ((color == Color::WHITE && rating > best_rating) ||
-                (color == Color::BLACK && rating < best_rating)) {
-            best_rating = rating;
-        }
-        temp_game->undo_move();
-    }
-
-    return best_rating;
-}
-
 int Engine::evaluate(Game *g) {
     if (g->ended()) {
         return g->who_won() * INFINITY;
@@ -201,4 +158,89 @@ int Engine::evaluate_piece(Piece *p, bool endgame) {
             return false;
     }
     return 0;
+}
+
+std::string Engine::generate_move() {
+    std::pair<std::string, int> best = std::make_pair("", 0);
+    Color next_color = (main_color == Color::WHITE) ? Color::BLACK : Color::WHITE;
+    int alpha = -INFINITY, beta = INFINITY;
+
+    Game *temp_game = new Game(game);
+    if (main_color == Color::WHITE) {
+        best.second = -INFINITY;
+        for (std::string move_string : temp_game->possible_moves_for(main_color)) {
+            temp_game->move(move_string, false);
+            int rating = rate_move(temp_game, default_depth-1, alpha, beta, next_color);
+            if (rating > best.second) {
+                best.second = rating;
+                best.first = move_string;
+            }
+            alpha = std::max(alpha, rating);
+            temp_game->undo_move();
+            if (beta < alpha) {
+                return best.first;
+            }
+        }
+    } else {
+        best.second = INFINITY;
+        for (std::string move_string : temp_game->possible_moves_for(main_color)) {
+            temp_game->move(move_string, false);
+            int rating = rate_move(temp_game, default_depth-1, alpha, beta, next_color);
+            if (rating < best.second) {
+                best.second = rating;
+                best.first = move_string;
+            }
+            beta = std::min(beta, rating);
+            temp_game->undo_move();
+            if (beta < alpha) {
+                return best.first;
+            }
+        }
+    }
+    temp_game->clear_move_queue();
+    delete temp_game;
+    
+    return best.first;
+}
+
+int Engine::rate_move(Game *temp_game, int depth, int alpha, int beta, Color color) {
+    if (temp_game->ended() || depth == 0) {
+        int eval = evaluate(temp_game);
+        if (eval == INFINITY) {
+            eval += depth;
+        } else if (eval == -INFINITY) {
+            eval -= depth;
+        }
+        return eval;
+    }
+    Color next_color = (color == Color::WHITE) ? Color::BLACK : Color::WHITE;
+    int best_rating;
+
+    if (color == Color::WHITE) {
+        best_rating = -INFINITY;
+        for (std::string move_string : temp_game->possible_moves_for(color)) {
+            temp_game->move(move_string, false);
+            int rating = rate_move(temp_game, depth-1, alpha, beta, next_color);
+            best_rating = std::max(best_rating, rating);
+            alpha = std::max(alpha, rating);
+            temp_game->undo_move();
+            if (beta < alpha) {
+                return best_rating;
+            }
+        }
+    } else {
+        best_rating = INFINITY;
+        for (std::string move_string : temp_game->possible_moves_for(color)) {
+            temp_game->move(move_string, false);
+            int rating = rate_move(temp_game, depth-1, alpha, beta, next_color);
+            best_rating = std::min(best_rating, rating);
+            beta = std::min(beta, rating);
+            temp_game->undo_move();
+            if (beta < alpha) {
+                return best_rating;
+            }
+        }
+    }
+
+    return best_rating;
 }

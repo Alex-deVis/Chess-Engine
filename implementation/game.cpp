@@ -556,39 +556,47 @@ bool Game::can_color_reach(Color color, Position target) {
     // Horizontally
     for (char c = target.col-1; c >= 'a'; c--) {
         encountered_piece = board->get_piece_at(Position(c, target.row));
-        if (encountered_piece && encountered_piece->color == color &&
-                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
-            return true;
-        } else if (encountered_piece && encountered_piece->color != color) {
-            break;
+        if (encountered_piece) {
+            if (encountered_piece->color == color &&
+            ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+                return true;
+            } else {
+                break;
+            }
         }
     }
     for (char c = target.col+1; c <= 'h'; c++) {
         encountered_piece = board->get_piece_at(Position(c, target.row));
-        if (encountered_piece && encountered_piece->color == color &&
-                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
-            return true;
-        } else if (encountered_piece && encountered_piece->color != color) {
-            break;
+        if (encountered_piece) {
+            if (encountered_piece->color == color &&
+            ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+                return true;
+            } else {
+                break;
+            }
         }
     }
     // Vertically
     for (int r = target.row-1; r >= 1; r--) {
         encountered_piece = board->get_piece_at(Position(target.col, r));
-        if (encountered_piece && encountered_piece->color == color &&
-                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
-            return true;
-        } else if (encountered_piece && encountered_piece->color != color) {
-            break;
+        if (encountered_piece) {
+            if (encountered_piece->color == color &&
+            ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+                return true;
+            } else {
+                break;
+            }
         }
     }
     for (int r = target.row+1; r <= 8; r++) {
         encountered_piece = board->get_piece_at(Position(target.col, r));
-        if (encountered_piece && encountered_piece->color == color &&
-                ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
-            return true;
-        } else if (encountered_piece && encountered_piece->color != color) {
-            break;
+        if (encountered_piece) {
+            if (encountered_piece->color == color &&
+            ((encountered_piece->type == Type::Q || encountered_piece->type == Type::R))) {
+                return true;
+            } else {
+                break;
+            }
         }
     }
     // Diagonally
@@ -609,11 +617,13 @@ bool Game::can_color_reach(Color color, Position target) {
 
         for (int d=1; d<=dist; d++) {
             encountered_piece = board->get_piece_at(Position(target.col + d*coef_col[k], target.row + d*coef_row[k]));
-            if (encountered_piece && encountered_piece->color == color &&
+            if (encountered_piece) {
+                if (encountered_piece->color == color &&
                 ((encountered_piece->type == Type::Q || encountered_piece->type == Type::B))) {
-                return true;
-            } else if (encountered_piece && encountered_piece->color != color) {
-                break;
+                    return true;
+                } else {
+                    break;
+                }
             }
         }
     }
