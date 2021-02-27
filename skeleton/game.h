@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include "board.h"
-#define INFINITY    1000
 
 class Game {
 public:
@@ -17,9 +16,13 @@ public:
 
    // Engine
    void undo_move();
-   double evaluate();
+   // int evaluate();
    std::vector<std::string> possible_moves_for(Color color);
    void clear_move_queue();
+   Board* get_board();
+   int get_taken(Color color);
+   int who_won();
+   bool in_the_endgame();
 
 private:
    Board *board;
