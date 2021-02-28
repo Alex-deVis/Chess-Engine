@@ -1,52 +1,49 @@
 #include <iostream>
-#include "skeleton/game.h"
+#include <sstream>
 #include "skeleton/engine.h"
 
 using namespace std;
 
-void ultramove(Game *game, std::string moves) {
-    for (int i=0; i<moves.size(); i+=4) {
-        string m;
-        m += moves[i];
-        m += moves[i+1];
-        m += moves[i+2];
-        m += moves[i+3];
-        game->move(m);
-    }
-}
-
 int main() {
-    Game *game = new Game();
-    Engine bombard(game, Color::BLACK, 4);
-    string user_move;
-    string engine_move;
+	Engine *Devis_engine = new Engine(4);
+    Devis_engine->set_color(Color::BLACK);
+    bool forced = false;
+	std::string cmd, token, my_move, enemy_move;
 
-    ultramove(game, "d2d4b8c6b1c3e7e5g1f3e5d4e2e3d4c3d1d5g8f6d5f7e8f7f1e2f8b4");
+	std::cout.setf(std::ios::unitbuf);
+	std::cin.setf(std::ios::unitbuf);
+	
+	while (true) {
+		getline(std::cin, cmd, '\n');
+		std::istringstream input(cmd);
+		
+        input >> token;
 
-    game->print_board();
-    while(true) {
-        // Player
-        cin >> user_move;
-        if (user_move == "exit") {
-            break;
+        if (token == "quit") {
+			break;
+		} else if (token == "protover") {
+			std::cout << "feature ping=1 setboard=1 colors=1 usermove=1 sigint=0 myname=\"BombardiSah\"\n" << "feature done=1\n";
+        } else if (token == "new") {
+			Devis_engine->new_game();
+        } else if (token == "ping") {
+            std::string aux;
+            input >> aux;
+            std::cout << "pong " << aux << "\n";
+        } else if (token == "usermove") {
+            input >> enemy_move;
+            Devis_engine->play_move(enemy_move, forced);
+            my_move = Devis_engine->generate_move();
+            Devis_engine->play_move(my_move, forced);
+            std::cout << "move " << my_move << "\n";
+        } else if (token == "white") {
+            Devis_engine->set_color(Color::WHITE);   
+        } else if (token == "black") {
+            Devis_engine->set_color(Color::BLACK);
+        } else if (token == "forced") {
+            forced = !forced;
         }
-        if (game->move(user_move, false)) {
-            game->print_board();
-            if (game->ended(false)) {
-                break;
-            }
-            // Engine
-            engine_move = bombard.generate_move();
-            std::cout << "I decided to play " << engine_move << "\n";
-            game->move(engine_move, false);
-            game->print_board();
-            if (game->ended(false)) {
-                break;
-            }
-            std::cout << "\n";
-        }
-    }
-    delete game;
-
-    return 0;
+	}
+	delete Devis_engine;
+	
+	return 0;
 }

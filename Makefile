@@ -1,24 +1,24 @@
+CXX 		= g++
+CPPFLAGS 	= -g -Wall -Wextra
+
 build: pieces.o board.o game.o engine.o
-	g++ -g -Wall -Wextra -o main main.cpp pieces.o board.o game.o engine.o
+	$(CXX) $(CPPFLAGS) -o devis_engine main.cpp pieces.o board.o game.o engine.o
 	rm *.o
 
 pieces.o:
-	g++ -g -Wall -Wextra -c ./implementation/pieces.cpp
+	$(CXX) $(CPPFLAGS) -c ./implementation/pieces.cpp
 
 board.o:
-	g++ -g -Wall -Wextra -c ./implementation/board.cpp
+	$(CXX) $(CPPFLAGS) -c ./implementation/board.cpp
 
 game.o:
-	g++ -g -Wall -Wextra -c ./implementation/game.cpp
+	$(CXX) $(CPPFLAGS) -c ./implementation/game.cpp
 
 engine.o:
-	g++ -g -Wall -Wextra -c ./implementation/engine.cpp
+	$(CXX) $(CPPFLAGS) -c ./implementation/engine.cpp
 
 run: build
 	./main
 
-debug: build
-	valgrind --leak-check=full --track-origins=yes ./main
-
 clean:
-	rm main
+	rm devis_engine
