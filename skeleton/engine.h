@@ -4,15 +4,15 @@
 
 class Engine {
 public:
-    Engine(Game *game, Color c, int dd = 3);
+    Engine(int dd = 3, Color c = Color::WHITE);
     ~Engine();
 
-    void opponent_move(std::string move_string);
+    void play_move(std::string move_string, bool forced = false);
     std::string generate_move();
-
-private:
+    void set_color(Color color);
+    void new_game();
     Game *game;
-    Game *thinking_game;
+private:
     Color main_color;
     int default_depth;
 

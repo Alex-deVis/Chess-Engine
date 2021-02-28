@@ -1,6 +1,7 @@
 #include "../skeleton/engine.h"
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 const int pawns_points[8][8] =  {{0,  0,  0,  0,  0,  0,  0,  0},
                                 {50, 50, 50, 50, 50, 50, 50, 50},
@@ -65,30 +66,43 @@ const int king_end_points[8][8] =   {{-50,-40,-30,-20,-20,-30,-40,-50},
                                     {-30,-30,  0,  0,  0,  0,-30,-30},
                                     {-50,-30,-30,-30,-30,-30,-30,-50}};
 
-Engine::Engine(Game *game, Color c = Color::WHITE, int dd) {
-    this->game = game;
-    this->main_color = c;
+Engine::Engine(int dd, Color color) {
+    this->game = new Game();
+    this->main_color = color;
     this->default_depth = dd;
+}
+
+void Engine::set_color(Color color) {
+    this->main_color = color;
+}
+
+void Engine::new_game() {
+    delete game;
+    this->game = new Game();
 }
 
 Engine::~Engine() {
 }
 
-void Engine::opponent_move(std::string move_string) {
-    this->game->move(move_string, false);
+void Engine::play_move(std::string move_string, bool forced) {
+    std::ofstream out("x.txt");
+    if (this->game->move(move_string, forced)) {
+        out << "the move was " << move_string << std::endl;
+    } else {
+        out << "ia ca il fut in gura cu " << move_string << " al lui" << std::endl;
+    }
 }
 
 int Engine::evaluate(Game *g) {
     if (g->ended()) {
         return g->who_won() * INFINITY;
     }
-    Board *b=g->get_board();
     Piece *p;
     int score=0;
     int ct=g->get_taken(Color::WHITE) + g->get_taken(Color::BLACK);
     for (int r=1; r<=8; r++) {
         for (char c='a'; c<='h'; c++) {
-            p = b->get_piece_at(Position(c, r));
+            p = g->get_piece_at(Position(c, r));
             if (p) {
                 if (p->type == Type::K) {
                     if (p->color == Color::WHITE) {
@@ -203,9 +217,9 @@ std::string Engine::generate_move() {
     return best.first;
 }
 
-int Engine::rate_move(Game *temp_game, int depth, int alpha, int beta, Color color) {
-    if (temp_game->ended() || depth == 0) {
-        int eval = evaluate(temp_game);
+int Engine::rate_move(Game *g, int depth, int alpha, int beta, Color color) {
+    if (g->ended() || depth == 0) {
+        int eval = evaluate(g);
         if (eval == INFINITY) {
             eval += depth;
         } else if (eval == -INFINITY) {
@@ -218,24 +232,24 @@ int Engine::rate_move(Game *temp_game, int depth, int alpha, int beta, Color col
 
     if (color == Color::WHITE) {
         best_rating = -INFINITY;
-        for (std::string move_string : temp_game->possible_moves_for(color)) {
-            temp_game->move(move_string, false);
-            int rating = rate_move(temp_game, depth-1, alpha, beta, next_color);
+        for (std::string move_string : g->possible_moves_for(color)) {
+            g->move(move_string, false);
+            int rating = rate_move(g, depth-1, alpha, beta, next_color);
             best_rating = std::max(best_rating, rating);
             alpha = std::max(alpha, rating);
-            temp_game->undo_move();
+            g->undo_move();
             if (beta < alpha) {
                 return best_rating;
             }
         }
     } else {
         best_rating = INFINITY;
-        for (std::string move_string : temp_game->possible_moves_for(color)) {
-            temp_game->move(move_string, false);
-            int rating = rate_move(temp_game, depth-1, alpha, beta, next_color);
+        for (std::string move_string : g->possible_moves_for(color)) {
+            g->move(move_string, false);
+            int rating = rate_move(g, depth-1, alpha, beta, next_color);
             best_rating = std::min(best_rating, rating);
             beta = std::min(beta, rating);
-            temp_game->undo_move();
+            g->undo_move();
             if (beta < alpha) {
                 return best_rating;
             }

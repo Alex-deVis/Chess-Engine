@@ -16,13 +16,12 @@ public:
 
    // Engine
    void undo_move();
-   // int evaluate();
    std::vector<std::string> possible_moves_for(Color color);
    void clear_move_queue();
-   Board* get_board();
    int get_taken(Color color);
    int who_won();
    bool in_the_endgame();
+   Piece *get_piece_at(Position pos);
 
 private:
    Board *board;

@@ -29,7 +29,7 @@ Game::~Game() {
 
 /* User dedicated methods */
 bool Game::move(std::string move_string, bool forced) {
-    assert(("Move length must be equal to 4." && move_string.length() == 4));
+    assert(("Move length must be equal to 4." && (move_string.length() == 4 || move_string.length() == 5)));
 
     Position start = Position(move_string[0], atoi(move_string.substr(1, 1).c_str()));
     Position end = Position(move_string[2], atoi(move_string.substr(3, 1).c_str()));
@@ -46,7 +46,23 @@ bool Game::move(std::string move_string, bool forced) {
             board->move_piece(r, r_pos);
         } else if (config.promotion) {
             // Promote to queen by default
-            board->set_piece_at(new Queen(board->get_piece_at(start)->color, end), end);
+            char promote_to = move_string[4];
+            switch (promote_to) {
+                case 'q':
+                    board->set_piece_at(new Queen(board->get_piece_at(start)->color, end), end);
+                    break;
+                case 'r':
+                    board->set_piece_at(new Rook(board->get_piece_at(start)->color, end), end);
+                    break;
+                case 'b':
+                    board->set_piece_at(new Bishop(board->get_piece_at(start)->color, end), end);
+                    break;
+                case 'n':
+                    board->set_piece_at(new Knight(board->get_piece_at(start)->color, end), end);
+                    break;
+                default:
+                    assert("Invalid promotion attempt");
+            }
             delete board->get_piece_at(start);
             board->set_piece_at(nullptr, start);
         } else {
@@ -139,16 +155,16 @@ bool Game::valid_move(Position start, Position end, bool suppress_msg) {
             break;
         default:
             assert("Invalid piece on the board");
-            return false;
     }
     if (canReach == false) {
+        std::cout << "pula boy\n";
         if (!suppress_msg) std::cout << "Piece at " << start << " cannot reach " << end << "\n";
         return false;
     }
 
     // In check verification
     if (will_remain_in_check_after(start, end)) {
-        if (!suppress_msg) (board->get_piece_at(start)->color == Color::WHITE) ? std::cout << "White " : std::cout << "Black "; 
+        if (!suppress_msg) (board->get_piece_at(start)->color == Color::WHITE) ? std::cout << "White" : std::cout << "Black"; 
         if (!suppress_msg) std::cout << " will remain in check if that move is played\n";
         return false;
     }
@@ -287,6 +303,10 @@ Transition Game::generate_transition(std::string move_string) {
 
 void Game::clear_move_queue() {
     this->played_moves->clear();
+}
+
+Piece* Game::get_piece_at(Position pos) {
+    return board->get_piece_at(pos);
 }
 
 // Generates a list of moves for a piece type
@@ -636,6 +656,12 @@ bool Game::can_color_reach(Color color, Position target) {
 
 /* Move patterns verification */
 bool Game::can_reach(King *p, Position end) {
+    Position enemy_king(board->b_king);
+    if (p->color == Color::BLACK) enemy_king = board->w_king;
+    if (abs(enemy_king.col - end.col) <= 1 && abs(enemy_king.row - end.row) <= 1) {
+        return false;
+    }
+
     if (abs(p->pos.col - end.col) <= 1 && abs(p->pos.row - end.row) <= 1) {
         if (board->is_piece_at(end)) {
             Piece *target = board->get_piece_at(end);
@@ -966,10 +992,6 @@ std::vector<std::string> Game::possible_moves_for(Color color) {
     }
 
     return pos_moves;
-}
-
-Board* Game::get_board() {
-    return this->board;
 }
 
 int Game::get_taken(Color color) {
