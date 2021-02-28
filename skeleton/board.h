@@ -35,12 +35,6 @@ class Board {
     void print_board();
 };
 
-/*
-    Capture:    LSB set
-    Castle:     second LSB set
-    Promotion:  third LSB set
-*/
-
 class Transition {
  public:
     std::string move_string;

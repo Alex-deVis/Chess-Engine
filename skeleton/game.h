@@ -15,9 +15,13 @@ public:
    bool ended(bool suppress_msg = true);
 
    // Engine
-   void undo_move();
    std::vector<std::string> possible_moves_for(Color color);
+   void undo_move();
+   
+   // Setter
    void clear_move_queue();
+
+   // Getters
    int get_taken(Color color);
    int who_won();
    bool in_the_endgame();

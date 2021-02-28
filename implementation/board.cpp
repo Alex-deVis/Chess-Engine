@@ -1,7 +1,7 @@
 #include "../skeleton/board.h"
 
 Board::Board() : w_king(Position('e', WHITE_PIECES_ROW)), b_king(Position('e', BLACK_PIECES_ROW)) {
-    // Initialise Board and maps
+    // Initialise board
     board = new std::vector<std::vector<Piece*>>(8, std::vector<Piece*>(SIZE, nullptr));
 
     // White pieces
