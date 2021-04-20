@@ -1,4 +1,4 @@
-# DCE - (Devis Chess Engine)
+# Chess Engine
 > This project represents the implementation for Chess AI, based on Alpha-Beta Prunning algorithm.
 
 ## Table of contents
